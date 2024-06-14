@@ -8,7 +8,7 @@
 #include "EnergyCore.h"
 #include "NiagaraComponent.h"
 #include "CoreExplosionEffect.h"
-
+#include "SoundManageComponent.h"
 
 // Sets default values
 APillar::APillar()
@@ -27,6 +27,8 @@ APillar::APillar()
 	ButtonMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ButtonMesh"));
 	ButtonMesh->SetupAttachment(PillarMesh);
 
+	SoundComp = CreateDefaultSubobject<USoundManageComponent>(TEXT("SoundComp"));
+
 	if (true == HasAuthority())
 	{
 		bReplicates = true;
@@ -43,6 +45,7 @@ void APillar::BeginPlay()
 	if (true == HasAuthority())
 	{
 		FsmComp->ChangeState(Fsm::Close);
+		SoundComp->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	}
 }
 
@@ -59,7 +62,7 @@ void APillar::SetupFsm()
 	FsmComp->CreateState(Fsm::Close,
 		[this]
 		{
-
+			SoundComp->MulticastSetAttenuationDistance(1500.f, 4000.f);
 		},
 
 		[this](float DT)
@@ -77,6 +80,7 @@ void APillar::SetupFsm()
 	FsmComp->CreateState(Fsm::ShutterOpen,
 		[this]
 		{
+			SoundComp->MulticastChangeSound(TEXT("Shutter_Cue"));
 			DefaultPos = GetActorLocation();
 			ParentShutter->SetShutterOpen();
 		},
@@ -97,6 +101,7 @@ void APillar::SetupFsm()
 	FsmComp->CreateState(Fsm::WaitMove,
 		[this]
 		{
+			SoundComp->MulticastChangeSound(TEXT("PowerCoreElevatorUp_Cue"));
 			PlayerWaitPos = DefaultPos;
 			PlayerWaitPos.Z += PlayerWaitSize;
 
@@ -153,7 +158,7 @@ void APillar::SetupFsm()
 	FsmComp->CreateState(Fsm::MoveUp,
 		[this]
 		{
-
+			SoundComp->MulticastChangeSound(TEXT("PowerCoreElevatorLoop_Cue"));
 		},
 
 		[this](float DT)
@@ -181,13 +186,12 @@ void APillar::SetupFsm()
 
 		[this]
 		{
-
+			SoundComp->MulticastSoundStop();
 		});
 
 	FsmComp->CreateState(Fsm::WaitBoom,
 		[this]
 		{
-
 		},
 
 		[this](float DT)
@@ -217,6 +221,7 @@ void APillar::SetupFsm()
 				{
 					ShieldOpenRatio = 1.f;
 					bShieldOpen = true;
+					SoundComp->MulticastPlaySoundLocation(TEXT("PowerCoreShieldactivate_Cue"),GetActorLocation());
 				}
 				ShieldMesh->SetRelativeLocation(FMath::Lerp(ShieldDefaultPos, ShieldOpenPos, ShieldOpenRatio));
 			}
@@ -226,7 +231,6 @@ void APillar::SetupFsm()
 			{
 				//레이저 타격 체크 필요
 				FsmComp->ChangeState(Fsm::Boom);
-				Multicast_SpawnNiagaraEffect();
 				return;
 			}
 		},
@@ -238,7 +242,7 @@ void APillar::SetupFsm()
 	FsmComp->CreateState(Fsm::MoveDown,
 		[this]
 		{
-
+			SoundComp->MulticastChangeSound(TEXT("PowerCoreElevatorLoop_Cue"));
 		},
 
 		[this](float DT)
@@ -258,6 +262,7 @@ void APillar::SetupFsm()
 				{
 					ShieldOpenRatio = 0.f;
 					bShieldOpen = false;
+					SoundComp->MulticastPlaySoundLocation(TEXT("PowerCoreShielddeactivate_Cue"), GetActorLocation());
 				}
 				ShieldMesh->SetRelativeLocation(FMath::Lerp(ShieldDefaultPos, ShieldOpenPos, ShieldOpenRatio));
 			}
@@ -277,24 +282,29 @@ void APillar::SetupFsm()
 
 		[this]
 		{
-
+			SoundComp->MulticastSoundStop();
 		});
 
 	FsmComp->CreateState(Fsm::Boom,
 		[this]
 		{
 			ParentShutter->SetDone();
-			EnergyCoreActor->Destroy();
+
+			SoundComp->MulticastPlaySoundDirect("PowerCoreHit_Cue");
 		},
 
 		[this](float DT)
 		{
-			FsmComp->ChangeState(Fsm::Done);
+			if (FsmComp->GetStateLiveTime()>=1.f)
+			{
+				FsmComp->ChangeState(Fsm::Done);
+			}
 		},
 
 		[this]
 		{
-
+			MulticastSpawnNiagaraEffect();
+			EnergyCoreActor->Destroy();
 		});
 
 
@@ -320,7 +330,7 @@ void APillar::SetupFsm()
 	FsmComp->CreateState(Fsm::Done,
 		[this]
 		{
-
+			SoundComp->MulticastChangeSound(TEXT("PowerCoreElevatorLoop_Cue"));
 		},
 
 		[this](float DT)
@@ -340,6 +350,7 @@ void APillar::SetupFsm()
 
 		[this]
 		{
+			SoundComp->MulticastSoundStop();
 		});
 }
 
@@ -359,7 +370,7 @@ void APillar::OnOverlapEnd(UPrimitiveComponent* OverlappedComp, AActor* OtherAct
 	}
 }
 
-void APillar::Multicast_SpawnNiagaraEffect_Implementation()
+void APillar::MulticastSpawnNiagaraEffect_Implementation()
 {
 	if (nullptr != EnergyCoreActor)
 	{

@@ -69,7 +69,8 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-private:	
+private:
+	class USoundManageComponent* SoundComp = nullptr;
 	bool bAttackStart = false;
 	float RotateSpeed = 30.f;
 

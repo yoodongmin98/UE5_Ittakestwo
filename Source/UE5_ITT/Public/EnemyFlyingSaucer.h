@@ -18,11 +18,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	
-
-	UFUNCTION(BlueprintCallable)
-	void FireHomingRocket();
-
 	UFUNCTION(BlueprintCallable)
 	void FireArcingProjectile();
 
@@ -61,7 +56,7 @@ public:
 	float LaserLerpRatio = 0.0f;
 
 	UPROPERTY(BlueprintReadWrite, Replicated)
-	float LaserLerpScale = 5.0f;
+	float LaserLerpScale = 7.5f;
 
 	UPROPERTY(BlueprintReadWrite, Replicated)
 	float LaserLerpRate = 25.0f;
@@ -174,7 +169,7 @@ public:
 
 		AllPhaseEnd,
 		TestState,
-		HatchTestState,
+		InteractionTestState,
 	};
 
 	UFUNCTION(BlueprintCallable)
@@ -200,12 +195,27 @@ public:
 	UPROPERTY(BlueprintReadWrite)
 	bool bIsDebugChangePhase = false;
 
+	// 사운드
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	class USoundManageComponent* SoundComp = nullptr;
+	
+	// 배경음
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	class USoundManageComponent* BGMComp = nullptr;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 private:
+	
+
+	void SpawnCodyChaseHomingRocket();
+	void SpawnMayChaseHomingRocket();
+
+	void CodyChaseRocketSpawnCheck(float DeltaTime);
+	void MayChaseRocketSpawnCheck(float DeltaTime);
+
 	// 보스애니메이션 변경시 사용하는 애니메이션 리소스 정보 애니메이션 시퀀스 or 애니메이션 블루프린트 
 	enum class EAnimationAssetType : uint8
 	{
@@ -264,8 +274,15 @@ private:
 	void SetupComponent();
 	void SetupFsmComponent();
 	
-	void EnableCutSceneCameraBlend(class APlayerBase* BlendTargetActor, class APhaseEndCameraRail* CameraRail, const float BlendTime, const float BlendRatio);
-	void DisableCutSceneCameraBlend(AActor* PrevViewTargetActor, const float BlendTime);
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastEnableCutSceneCameraBlend(class APhaseEndCameraRail* CameraRail, const float BlendTime, const float BlendRatio);
+	
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastDisableCutSceneCameraBlend(AActor* PrevViewTargetActor, const float BlendTime);
+
+	void ActiveCodyUI(bool bNewVisibility, bool bPropagateToChildren);
+	void ActiveMayUI(bool bNewVisibility, bool bPropagateToChildren);
+	void ActiveSplitScreen(bool bActive);
 
 	// 패턴 파훼시 플레이어 추가 키 입력 관련 변수 
 	UPROPERTY(EditDefaultsOnly)
@@ -332,12 +349,6 @@ private:
 	class UFsmComponent* FsmComp = nullptr;
 
 	UPROPERTY(Replicated, EditDefaultsOnly)
-	class UInteractionUIComponent* CodyHoldingUIComp = nullptr;
-
-	UPROPERTY(Replicated, EditDefaultsOnly)
-	class UInteractionUIComponent* MayLaserDestroyUIComp = nullptr;
-
-	UPROPERTY(Replicated, EditDefaultsOnly)
 	class URotatingMovementComponent* RotatingComp = nullptr;
 
 	UPROPERTY(Replicated, EditAnywhere)
@@ -389,11 +400,14 @@ private:
 
 	// 코디 홀딩 상태 시작시 코디 위치 이동에 관련한 값
 	// 이동 시켜서 고정시킬 코디 위치
-	FVector CodyLerpEndLocation = FVector(521.47f, -568.51f, 376.55f);
+	FVector CodyLerpEndLocation = FVector(621.47f, -591.51f, 10366.55f);
 	
 	// 메이 위치보정값 
 	// 104 + 9990
 	FVector MayCorrectLocation = FVector(491.0f, -308.0f, 10094.55f);
+
+	FVector CodyUfoInsideLocation = FVector(395.0f, 113.0f, -4437.0f);
+	FRotator CodyUfoInsideRotation = FRotator(0.f, -150.f, 0.f);
 
 	// 러프 비율을 저장할 float
 	float CodyLerpRatio = 0.0f;
@@ -419,9 +433,12 @@ private:
 	class AMay* PlayerMay = nullptr;
 
 	bool bIsCorretLocation = false;
-	float HomingRocket1FireTime = 0.0f;
-	float HomingRocket2FireTime = 0.0f;
-	float HomingRocketCoolTime = 15.0f;
+	float HomingRocket1FireTime = 4.0f;
+	float HomingRocket2FireTime = 4.0f;
+	float HomingRocketCoolTime = 4.0f;
+
+	bool bIsCodyChaseRocketDestroy = false;
+	bool bIsMayChaseRocketDestroy = false;
 
 	// 로켓 액터 
 	class AHomingRocket* HomingRocketActor_1 = nullptr;
@@ -463,4 +480,9 @@ private:
 	// 모든 패턴 종료시 사용될 값 
 	UPROPERTY(EditAnywhere)
 	bool bIsAllPhaseEnd = false;
+
+	UPROPERTY(EditAnywhere)
+	bool bIsPhase1End = false;
+
+	
 };

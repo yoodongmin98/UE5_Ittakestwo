@@ -4,6 +4,7 @@
 #include "Laser.h"
 #include "FsmComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "SoundManageComponent.h"
 
 // Sets default values
 ALaser::ALaser()
@@ -18,6 +19,8 @@ ALaser::ALaser()
 		SetReplicateMovement(true);
 		LaserMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LaserMesh"));
 		RootComponent = LaserMesh;
+		SoundComp = CreateDefaultSubobject<USoundManageComponent>(TEXT("SoundComp"));
+
 		SetupFsm();
 	}
 
@@ -37,6 +40,8 @@ void ALaser::BeginPlay()
 		DefaultPos = LaserMesh->GetRelativeLocation();
 		AttackPos = DefaultPos;
 		AttackPos.Z += AttackMoveSize;
+
+		SoundComp->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	}
 }
 
@@ -46,7 +51,7 @@ void ALaser::SetupFsm()
 	FsmComp->CreateState(Fsm::Wait,
 		[this]
 		{
-
+			SoundComp->MulticastSetAttenuationDistance(1500.f, 4000.f);
 		},
 
 		[this](float DT)
@@ -64,6 +69,7 @@ void ALaser::SetupFsm()
 	FsmComp->CreateState(Fsm::MoveUp,
 		[this]
 		{
+			SoundComp->MulticastChangeSound(TEXT("PowerCoreElevatorUp_Cue"));
 		},
 
 		[this](float DT)
@@ -89,7 +95,7 @@ void ALaser::SetupFsm()
 			LaserSizeRatio = 0.f;
 			MulticastActiveLaser(true);
 			MulticastSetLaserSize(1.f);
-
+			SoundComp->MulticastChangeSound(TEXT("LaserSpinnerLoop_Cue"));
 		},
 
 		[this](float DT)
@@ -113,7 +119,6 @@ void ALaser::SetupFsm()
 	FsmComp->CreateState(Fsm::Attack,
 		[this]
 		{
-
 		},
 
 		[this](float DT)
@@ -160,7 +165,7 @@ void ALaser::SetupFsm()
 	FsmComp->CreateState(Fsm::MoveDown,
 		[this]
 		{
-
+			SoundComp->MulticastChangeSound(TEXT("PowerCoreElevatorDown_Cue"));
 		},
 
 		[this](float DT)

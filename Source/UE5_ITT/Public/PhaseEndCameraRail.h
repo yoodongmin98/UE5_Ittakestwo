@@ -27,8 +27,8 @@ public:
 	};
 	virtual void Tick(float DeltaTime)override;
 
-	UFUNCTION(NetMulticast, Reliable)
-	void MulticastEnableCameraMove(const float MoveRatio = 0.25f);
+	
+	void EnableCameraMove(const float MoveRatio = 0.25f);
 
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastTickCameraMove(float DeltaTime);

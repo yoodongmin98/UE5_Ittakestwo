@@ -21,6 +21,8 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	UPROPERTY(EditAnywhere)
+	UStaticMeshComponent* ColMesh=nullptr;
 	UFUNCTION()
-	void OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
+	void OnOverlapBegin(class UPrimitiveComponent* OverlappedComp, class AActor* OtherActor, class UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 };

@@ -41,6 +41,9 @@ protected:
 
 
 private:
+
+
+
     UPROPERTY()
     UWidgetComponent* NearWidgetComponent;
 
@@ -49,7 +52,11 @@ private:
 
     void InitComponent();
 
-    bool SetVisibilityBasedOnTage(APawn* PlayerPawn);
 
-    void SetVisibilityBasedOnDistance(APawn* PlayerPawn);
+    void SetVisibilityBasedOnDistance();
+
+
+    void FindTargetActor();
+    class APlayerBase* TargetActor;
+
 };

@@ -22,6 +22,7 @@ public:
 public:
 	enum class Fsm
 	{
+		PlayerWait,
 		Phase1_1,
 		Phase1_1Attack,
 		Phase1_2,
@@ -43,6 +44,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	class USoundManageComponent* SoundComp = nullptr;
 
 	float MoveTime = 20.f;
 	float MoveSize = 4995.f;

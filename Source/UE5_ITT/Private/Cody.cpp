@@ -28,7 +28,9 @@ void ACody::BeginPlay()
 	SmallSize= FVector(0.1111111111f, 0.1111111111f, 0.1111111111f);
 	TargetScale = NormalSize;
 
-	
+	CurSprintArmLength = SpringArmLength = NormalLength;
+	SpringArmLerpTime = 0.0f;
+
 	AActor* FoundBoss = UGameplayStatics::GetActorOfClass(GetWorld(), AEnemyFlyingSaucer::StaticClass());
 	EnemyBoss = Cast<AEnemyFlyingSaucer>(FoundBoss);
 
@@ -41,29 +43,33 @@ void ACody::Tick(float DeltaTime)
 	GetCapsuleComponent()->MarkRenderStateDirty();
 	ACharacter::JumpMaxCount = CustomPlayerJumpCount;
 	//Size Setting
-	switch (NextCodySize)
+
+	if (CurSprintArmLength != SpringArmLength)
 	{
-	case CodySize::BIG:
-	{
-		ClientCameraLengthChange(BigLength, DeltaTime, CameraSpeed);
-		ServerCameraLengthChange(BigLength, DeltaTime, CameraSpeed);
-		break;
+		SpringArmLerpTime += DeltaTime;
+
+		float tmpLength;
+		if (CodySize::SMALL == NextCodySize)
+		{
+			tmpLength = FMath::FInterpTo(CurSprintArmLength, SpringArmLength, SpringArmLerpTime, CameraSpeed);
+		}
+		else
+		{
+			tmpLength = FMath::FInterpTo(CurSprintArmLength, SpringArmLength, SpringArmLerpTime, CameraSpeed);
+		}
+		SpringArm->TargetArmLength = tmpLength;
+		if (SpringArmLerpTime > 1.0f)
+		{
+			CurSprintArmLength = SpringArmLength;
+			SpringArmLerpTime = 0.0f;
+		}
+		//UE_LOG(LogTemp, Display, TEXT("difflength"));
 	}
-	case CodySize::NORMAL:
-	{
-		ClientCameraLengthChange(NormalLength, DeltaTime, CameraSpeed);
-		ServerCameraLengthChange(NormalLength, DeltaTime, CameraSpeed);
-		break;
-	}
-	case CodySize::SMALL:
-	{
-		ClientCameraLengthChange(SmallLength, DeltaTime, CameraSpeed * 2.0);
-		ServerCameraLengthChange(SmallLength, DeltaTime, CameraSpeed * 2.0);
-		break;
-	}
-	default:
-		break;
-	}
+	//else
+	//{
+	//	UE_LOG(LogTemp, Display, TEXT("samelength"));
+	//}
+
 	if (EnemyBoss != nullptr)
 	{
 		if (EnemyBoss->IsCodyHoldingEnter() == true)
@@ -92,6 +98,8 @@ void ACody::Tick(float DeltaTime)
 				FVector CurLocation = GetActorLocation();
 				CurLocation.Z += 90.f * 4.f;
 				SetActorLocation(CurLocation);
+				SpringArmLength = BigLength;
+
 				break;
 			}
 			case CodySize::NORMAL:
@@ -109,6 +117,8 @@ void ACody::Tick(float DeltaTime)
 				PlayerJumpZVelocity = PlayerDefaultJumpHeight;
 				DashDistance = 2500.0f;
 				GetCapsuleComponent()->SetWorldScale3D(NormalSize);
+				SpringArmLength = NormalLength;
+
 				break;
 			}
 			case CodySize::SMALL:
@@ -117,6 +127,8 @@ void ACody::Tick(float DeltaTime)
 				PlayerJumpZVelocity = PlayerDefaultJumpHeight -1300.0f;
 				DashDistance = 600.0f;
 				GetCapsuleComponent()->SetWorldScale3D(SmallSize);
+				SpringArmLength = SmallLength;
+
 				break;
 			}
 			default:
@@ -175,12 +187,26 @@ void ACody::Tick(float DeltaTime)
 			break;
 		}
 	}
+	//Sit
+	if (!CanSit)
+	{
+		CurrentSitTime = GetWorld()->GetTimeSeconds();
+		if (CurrentSitTime >= SitStartTime + SitDuration)
+		{
+			NowPlayerGravityScale = 10.0f;
+			if (!GetCharacterMovement()->IsFalling())
+			{
+				SitEnd();
+			}
+		}
+	}
 }
 
 void ACody::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+	PlayerInputComponent->BindAction(TEXT("Player_Sit"), EInputEvent::IE_Pressed, this, &ACody::Sit);
 	if (PlayerInput != nullptr)
 	{
 		if(true == HasAuthority())
@@ -375,6 +401,121 @@ void ACody::DashEnd()
 	}
 }
 
+
+void ACody::Sit()
+{
+	if (HasAuthority())
+	{
+		ClientSitStart();
+	}
+	else
+	{
+		ServerSitStart();
+	}
+}
+
+void ACody::ClientSitStart_Implementation()
+{
+	SitStartTime = GetWorld()->GetTimeSeconds();
+	if (GetCharacterMovement()->IsFalling() && CanSit && !bIsDashing)
+	{
+		ChangeState(Cody_State::SIT);
+		IsSit = true;
+		ChangeIdle = false;
+		//ÀÏ´Ü Áß·Â¾ø¾Ö
+		NowPlayerGravityScale = 0.0f;
+		//ÀÏ´Ü ¸ØÃç
+		GetCharacterMovement()->Velocity = FVector::ZeroVector;
+
+		CanSit = false;
+	}
+}
+bool ACody::ServerSitStart_Validate()
+{
+	return true;
+}
+
+void ACody::ServerSitStart_Implementation()
+{
+	SitStartTime = GetWorld()->GetTimeSeconds();
+	if (GetCharacterMovement()->IsFalling() && CanSit && !bIsDashing)
+	{
+		ChangeState(Cody_State::SIT);
+		IsSit = true;
+		ChangeIdle = false;
+		//ÀÏ´Ü Áß·Â¾ø¾Ö
+		NowPlayerGravityScale = 0.0f;
+		//ÀÏ´Ü ¸ØÃç
+		GetCharacterMovement()->Velocity = FVector::ZeroVector;
+
+		CanSit = false;
+	}
+}
+
+
+void ACody::SitEnd()
+{
+	ClientSitEnd();
+	ServerSitEnd();
+}
+
+void ACody::ClientSitEnd_Implementation()
+{
+	IsSit = false;
+	CanSit = true;
+	switch (GetCodySize())
+	{
+	case CodySize::BIG:
+	{
+		NowPlayerGravityScale = 5.5f;
+		break;
+	}
+	case CodySize::NORMAL:
+	{
+		NowPlayerGravityScale = DefaultGravityScale;
+		break;
+	}
+	case CodySize::SMALL:
+	{
+		NowPlayerGravityScale = 1.0f;
+		break;
+	}
+	default:
+		break;
+	}
+	
+}
+bool ACody::ServerSitEnd_Validate()
+{
+	return true;
+}
+
+void ACody::ServerSitEnd_Implementation()
+{
+	IsSit = false;
+	CanSit = true;
+	switch (GetCodySize())
+	{
+	case CodySize::BIG:
+	{
+		NowPlayerGravityScale = 5.5f;
+		break;
+	}
+	case CodySize::NORMAL:
+	{
+		NowPlayerGravityScale = DefaultGravityScale;
+		break;
+	}
+	case CodySize::SMALL:
+	{
+		NowPlayerGravityScale = 1.0f;
+		break;
+	}
+	default:
+		break;
+	}
+}
+
 void ACody::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
@@ -430,20 +571,20 @@ void ACody::CustomServerMoveable_Implementation()
 
 
 
-
-
-void ACody::ClientCameraLengthChange_Implementation(float _Length,float _DeltaTime, float _CameraSpeed)
-{
-	SpringArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, _Length, _DeltaTime, _CameraSpeed);
-	SpringArm->TargetArmLength = SpringArmLength;
-}
-
-bool ACody::ServerCameraLengthChange_Validate(float _Length, float _DeltaTime, float _CameraSpeed)
-{
-	return true;
-}
-void ACody::ServerCameraLengthChange_Implementation(float _Length,float _DeltaTime,float _CameraSpeed)
-{
-	SpringArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, _Length, _DeltaTime, _CameraSpeed);
-	SpringArm->TargetArmLength = SpringArmLength;
-}
+//
+//
+//void ACody::ClientCameraLengthChange_Implementation(float _Length,float _DeltaTime, float _CameraSpeed)
+//{
+//	SpringArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, _Length, _DeltaTime, _CameraSpeed);
+//	SpringArm->TargetArmLength = SpringArmLength;
+//}
+//
+//bool ACody::ServerCameraLengthChange_Validate(float _Length, float _DeltaTime, float _CameraSpeed)
+//{
+//	return true;
+//}
+//void ACody::ServerCameraLengthChange_Implementation(float _Length,float _DeltaTime,float _CameraSpeed)
+//{
+//	SpringArmLength = FMath::FInterpTo(SpringArm->TargetArmLength, _Length, _DeltaTime, _CameraSpeed);
+//	SpringArm->TargetArmLength = SpringArmLength;
+//}

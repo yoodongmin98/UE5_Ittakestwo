@@ -23,10 +23,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	UPROPERTY(EditAnywhere)
-	AEnemyFlyingSaucer* EnemyBoss = nullptr;
-
-
 	//CodySize Enum을 변경합니다
 	void ChangeCodySizeEnum(CodySize _Enum)
 	{
@@ -83,33 +79,7 @@ public:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void ServerSprintInput();
 
-
 	virtual void DashEnd() override;
-
-
-	UFUNCTION(Client, Reliable)
-	void ClientCameraLengthChange(float _Length, float _DeltaTime, float _CameraSpeed);
-	UFUNCTION(Server, Reliable, WithValidation)
-	void ServerCameraLengthChange(float _Length, float _DeltaTime, float _CameraSpeed);
-
-	//Size
-	FVector BigSize;
-	FVector NormalSize;
-	FVector SmallSize;
-	FVector TargetScale;
-
-	//Transform
-	FTransform CodyCapsuleComponent;
-	FTransform CodyTransform;
-	FTransform CodyLocalTransform;
-
-	float CodyDefaultSpeed;
-
-
-	UPROPERTY(Replicated)
-	float SpringArmLength;
-	UPROPERTY(Replicated)
-	float CameraSpeed;
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
@@ -131,4 +101,43 @@ public:
 	void CustomClientMoveable();
 	UFUNCTION(Server, Reliable, WithValidation)
 	void CustomServerMoveable();
+
+	void Sit();
+	UFUNCTION(Client, Reliable)
+	void ClientSitStart();
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSitStart();
+	void SitEnd();
+	UFUNCTION(Client, Reliable)
+	void ClientSitEnd();
+	UFUNCTION(Server, Reliable, WithValidation)
+	void ServerSitEnd();
+
+	//UFUNCTION(Client, Reliable)
+	//void ClientCameraLengthChange(float _Length, float _DeltaTime, float _CameraSpeed);
+	//UFUNCTION(Server, Reliable, WithValidation)
+	//void ServerCameraLengthChange(float _Length, float _DeltaTime, float _CameraSpeed);
+private:
+	//Size
+	FVector BigSize;
+	FVector NormalSize;
+	FVector SmallSize;
+	FVector TargetScale;
+
+	//Transform
+	FTransform CodyCapsuleComponent;
+	FTransform CodyTransform;
+	FTransform CodyLocalTransform;
+
+	float CodyDefaultSpeed;
+
+	float SpringArmLerpTime;
+	float CurSprintArmLength;
+	UPROPERTY(Replicated)
+	float SpringArmLength;
+	UPROPERTY(Replicated)
+	float CameraSpeed;
+
+	UPROPERTY(EditAnywhere)
+	AEnemyFlyingSaucer* EnemyBoss = nullptr;
 };

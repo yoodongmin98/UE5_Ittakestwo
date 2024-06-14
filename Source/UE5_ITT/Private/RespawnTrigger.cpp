@@ -29,9 +29,9 @@ void ARespawnTrigger::BeginPlay()
 
 void ARespawnTrigger::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	APlayerBase* Player = Cast<APlayerBase>(OtherActor);
-	if (OtherActor!=this&& nullptr != Player)
-	{		
+	if (OtherActor!=this&& true == OtherActor->ActorHasTag("Player"))
+	{
+		APlayerBase* Player = Cast<APlayerBase>(OtherActor);
 		Player->SetTriggerActors(this);
 	}
 }

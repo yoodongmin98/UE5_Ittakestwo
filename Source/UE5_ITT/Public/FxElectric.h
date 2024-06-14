@@ -26,6 +26,7 @@ public:
 		ClientWait,
 		Delay,
 		Active,
+		End,
 		Wait,
 	};
 
@@ -38,6 +39,8 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	UPROPERTY(EditAnywhere)
+	class USoundManageComponent* SoundComp = nullptr;
 	class UFsmComponent* FsmComp = nullptr;
 	
 	UPROPERTY(EditAnywhere)

@@ -4,6 +4,8 @@
 #include "BurstEffect.h"
 #include "Components/StaticMeshComponent.h"
 #include "PlayerBase.h"
+#include "Kismet/GameplayStatics.h"
+#include "SoundManageComponent.h"
 
 // Sets default values
 ABurstEffect::ABurstEffect()
@@ -30,6 +32,9 @@ void ABurstEffect::BeginPlay()
 	
 	if (true == HasAuthority())
 	{
+		SoundComp->AttachToComponent(StaticMeshComp, FAttachmentTransformRules::KeepRelativeTransform);
+		SoundComp->MulticastPlaySoundLocation(TEXT("LaserBomb_Explosion_Cue"), GetActorLocation());
+
 		StaticMeshComp->OnComponentBeginOverlap.AddDynamic(this, &ABurstEffect::OnOverlapBegin);
 		StaticMeshComp->OnComponentEndOverlap.AddDynamic(this, &ABurstEffect::OnOverlapEnd);
 	}
@@ -66,6 +71,8 @@ void ABurstEffect::SetupComponent()
 
 	StaticMeshComp = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BurstEffectMesh"));
 	StaticMeshComp->SetupAttachment(SceneComp);
+
+	SoundComp = CreateDefaultSubobject<USoundManageComponent>(TEXT("SoundManageComponent"));
 }
 
 void ABurstEffect::TickIncreaseScale(float DeltaTime)

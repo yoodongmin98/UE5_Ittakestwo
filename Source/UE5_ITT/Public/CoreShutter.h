@@ -64,7 +64,5 @@ private:
 
 	float RotateSize = 90.f;
 
-	UPROPERTY(EditAnywhere);
-	class UStaticMeshComponent* MeshComp = nullptr;
 	class UFsmComponent* FsmComp = nullptr;
 };

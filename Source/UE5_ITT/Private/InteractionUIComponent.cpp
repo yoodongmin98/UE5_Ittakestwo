@@ -2,6 +2,12 @@
 
 
 #include "InteractionUIComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "PlayerBase.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/PlayerController.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/WidgetComponent.h"
 
 // Sets default values for this component's properties
 UInteractionUIComponent::UInteractionUIComponent()
@@ -52,78 +58,20 @@ void UInteractionUIComponent::InitComponent()
     NearWidgetComponent->SetWorldScale3D(WidgetScale);
     FarWidgetComponent->SetWorldScale3D(WidgetScale);
     // Initially hide far widget
-    FarWidgetComponent->SetVisibility(false);
+    //NearWidgetComponent->SetVisibility(false);
+    //FarWidgetComponent->SetVisibility(false);
+
 
 }
 
-// Called every frame
-void UInteractionUIComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+
+void UInteractionUIComponent::SetVisibilityBasedOnDistance()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-
-    // Check if player controller pawn is valid
-    APawn* PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
-    if (!PlayerPawn || PlayerPawn->IsPendingKill())
+    if (!TargetActor)
     {
         return;
     }
-
-    // 태그 대상에 따라 설정
-    if (true == SetVisibilityBasedOnTage(PlayerPawn))
-    {
-        return;
-    }
-
-    // 거리에 따라 설정
-    SetVisibilityBasedOnDistance(PlayerPawn);
-
-}
-
-bool UInteractionUIComponent::SetVisibilityBasedOnTage(APawn* PlayerPawn)
-{
-    if (true == bOnlyMay && false == bOnlyCody)
-    {
-        const TArray<FName>& Tags = PlayerPawn->Tags;
-
-        // 태그를 순회하며 "Cody" 태그 확인
-        for (const FName& Tag : Tags)
-        {
-            if (Tag == FName("Cody"))
-            {
-                SetVisibility(false, true);
-                return true; // "Cody" 태그를 찾았을 경우 비활성화
-            }
-        }
-    }
-    if (false == bOnlyMay && true == bOnlyCody)
-    {
-        const TArray<FName>& Tags = PlayerPawn->Tags;
-
-        // 태그를 순회하며 "May" 태그 확인
-        for (const FName& Tag : Tags)
-        {
-            if (Tag == FName("May"))
-            {
-                SetVisibility(false, true);
-                return true; // "May" 태그를 찾았을 경우 비활성화
-            }
-        }
-    }
-    return false;
-}
-
-void UInteractionUIComponent::SetVisibilityBasedOnDistance(APawn* PlayerPawn)
-{
-    if (false == IsVisible())
-    {
-        NearWidgetComponent->SetVisibility(false);
-        FarWidgetComponent->SetVisibility(false);
-        return;
-    }
-
-    // Calculate distance between player controller and this scene component
-    FVector PlayerLocation = PlayerPawn->GetActorLocation();
+    FVector PlayerLocation = TargetActor->GetActorLocation();
     FVector SceneComponentLocation = GetComponentLocation();
     float Distance = FVector::Distance(PlayerLocation, SceneComponentLocation);
 
@@ -140,4 +88,98 @@ void UInteractionUIComponent::SetVisibilityBasedOnDistance(APawn* PlayerPawn)
         NearWidgetComponent->SetVisibility(false);
         FarWidgetComponent->SetVisibility(true);
     }
+}
+
+
+
+// Called every frame
+void UInteractionUIComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+    if (!TargetActor)
+    {
+        FindTargetActor();
+        return;
+    }
+    // 거리에 따라 설정
+    SetVisibilityBasedOnDistance();
+
+
+    if(bOnlyCody)
+    {
+        FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator();
+        It++;
+        if (!It)
+        {
+            return;
+        }
+        It->Get();
+        FVector TargetActorLocation = TargetActor->GetActorLocation();
+
+        // 액터의 월드 위치를 스크린 좌표로 변환하여 위치 확인
+        FVector2D ScreenPosition;
+        if (UGameplayStatics::ProjectWorldToScreen(It->Get(), GetComponentLocation(), ScreenPosition))
+        {
+            // 스크린 좌표가 뷰포트의 범위 내에 있는지 확인
+            int32 ViewportSizex, ViewportSizey;
+            It->Get()->GetViewportSize(ViewportSizex, ViewportSizey);
+
+            if (ScreenPosition.X >= ViewportSizex / 2 && ScreenPosition.X <= ViewportSizex &&
+                ScreenPosition.Y >= 0 && ScreenPosition.Y <= ViewportSizey)
+            {
+                // 액터가 스크린에 있는 경우
+                UE_LOG(LogTemp, Warning, TEXT("Actor %s is on screen at (%f, %f)"), *TargetActor->GetName(), ScreenPosition.X, ScreenPosition.Y);
+            
+
+                NearWidgetComponent->GetWidget()->SetPositionInViewport(ScreenPosition);
+                FarWidgetComponent->GetWidget()->SetPositionInViewport(ScreenPosition);
+                NearWidgetComponent->SetVisibility(true);
+                FarWidgetComponent->SetVisibility(true);
+            }
+            else
+            {
+                // 액터가 스크린에 없는 경우
+                NearWidgetComponent->SetVisibility(false);
+                FarWidgetComponent->SetVisibility(false);
+                UE_LOG(LogTemp, Warning, TEXT("Actor %s is not on screen"), *TargetActor->GetName());
+            }
+        }
+    }
+}
+
+void UInteractionUIComponent::FindTargetActor()
+{
+	TArray<AActor*> AllPlayerActors;
+
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerBase::StaticClass(), AllPlayerActors);
+
+	APlayerBase* me = Cast<APlayerBase>(GetOwner());
+	// PlayerActors를 순회하며 각 플레이어의 처리 수행
+    for (AActor* Player : AllPlayerActors)
+    {
+        if (me != Cast<APlayerBase>(Player))
+        {
+            APlayerBase* NextPlayer = Cast<APlayerBase>(Player);
+            const TArray<FName>& CheckTag = NextPlayer->Tags;
+            for (const FName& V : CheckTag)
+            {
+                if (V == FName("Cody") || V == FName("May"))
+                {
+                    if (true == bOnlyCody && V == FName("Cody"))
+                    {
+                        TargetActor = NextPlayer;
+                        return;
+
+                    }
+                    else if (true == bOnlyMay && V == FName("May"))
+                    {
+                        TargetActor = NextPlayer;
+                        return;
+                    }
+                }
+            }
+        }
+    }
+		// Player를 사용하여 플레이어 처리
 }

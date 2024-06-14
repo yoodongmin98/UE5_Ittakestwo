@@ -50,6 +50,7 @@ void AEnergyChargeEffect::SetupDestroyTimerEvent()
 void AEnergyChargeEffect::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
 	if (true == HasAuthority())
 	{
 	}

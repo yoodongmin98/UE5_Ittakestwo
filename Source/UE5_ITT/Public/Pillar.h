@@ -55,7 +55,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
-
+	class USoundManageComponent* SoundComp = nullptr;
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* PillarMesh = nullptr;
 
@@ -112,7 +112,7 @@ private:
 
 
 	UFUNCTION(NetMulticast, Reliable, BlueprintCallable)
-	void Multicast_SpawnNiagaraEffect();
+	void MulticastSpawnNiagaraEffect();
 
 
 	// Explosion Effect

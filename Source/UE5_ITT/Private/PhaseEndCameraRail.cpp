@@ -61,7 +61,7 @@ void APhaseEndCameraRail::MulticastTickCameraMove_Implementation(float DeltaTime
 	CamComp->SetWorldLocation(GetRailSplineComponent()->GetLocationAtTime(CurrentPositionOnRail, ESplineCoordinateSpace::World));
 }
 	
-void APhaseEndCameraRail::MulticastEnableCameraMove_Implementation(const float MoveRatio /*= 0.25f*/)
+void APhaseEndCameraRail::EnableCameraMove(const float MoveRatio /*= 0.25f*/)
 {
 	if (0.0f >= MoveRatio)
 	{

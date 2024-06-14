@@ -34,6 +34,7 @@ protected:
 	virtual void BeginPlay() override;
 
 private:
+	class USoundManageComponent* SoundComp = nullptr;
 	UPROPERTY(EditAnywhere)
 	class UStaticMeshComponent* SmasherMesh = nullptr;
 

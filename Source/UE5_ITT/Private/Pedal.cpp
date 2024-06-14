@@ -8,6 +8,8 @@
 #include "ITTGameModeBase.h"
 #include "Kismet/GameplayStatics.h"
 #include "Animation/AnimSequence.h"
+#include "SoundManageComponent.h"
+#include "GameManager.h"
 
 // Sets default values
 APedal::APedal()
@@ -28,6 +30,9 @@ APedal::APedal()
 
 		PedalCollision = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Pedal"));
 		PedalCollision->SetupAttachment(SmasherMesh);
+
+		SoundComp = CreateDefaultSubobject<USoundManageComponent>(TEXT("SoundComp"));
+
 		SetupFsm();
 	}
 }
@@ -40,6 +45,7 @@ void APedal::BeginPlay()
 		FsmComp->ChangeState(Fsm::ServerDelay);
 		PedalCollision->OnComponentBeginOverlap.AddDynamic(this, &APedal::OnOverlapBegin);
 		PedalCollision->OnComponentEndOverlap.AddDynamic(this, &APedal::OnOverlapEnd);
+		SoundComp->AttachToComponent(RootComponent, FAttachmentTransformRules::KeepRelativeTransform);
 	}
 }
 
@@ -54,12 +60,7 @@ void APedal::SetupFsm()
 
 		[this](float DeltaTime)
 		{
-			AITTGameModeBase* ITTGameMode = Cast<AITTGameModeBase>(UGameplayStatics::GetGameMode(GetWorld()));
-			if (ITTGameMode->GetPlayerLoginCount() == 2)
-			{
-				ServerDelayTime -= DeltaTime;
-			}
-			if (ServerDelayTime<=0.f)
+			if (true == Cast<UGameManager>(GetWorld()->GetGameInstance())->IsGameStart())
 			{
 				FsmComp->ChangeState(Fsm::SmashWait);
 			}
@@ -73,7 +74,7 @@ void APedal::SetupFsm()
 	FsmComp->CreateState(Fsm::SmashWait,
 		[this]
 		{
-
+			SoundComp->MulticastSetAttenuationDistance(250.f, 300.f);
 		},
 
 		[this](float DeltaTime)
@@ -93,6 +94,7 @@ void APedal::SetupFsm()
 		[this]
 		{
 			SmashRatio = 0.f;
+			SoundComp->MulticastChangeSound(TEXT("PedalPress_Cue"));
 		},
 
 		[this](float DeltaTime)

@@ -3,21 +3,19 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "CameraRig_Rail.h"
+#include "ParentCameraRail.h"
 #include "UfoCameraRail.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UE5_ITT_API AUfoCameraRail : public ACameraRig_Rail
+class UE5_ITT_API AUfoCameraRail : public AParentCameraRail
 {
 	GENERATED_BODY()
 
 public:
 	AUfoCameraRail(const FObjectInitializer& ObjectInitializer);
-
-	virtual bool ShouldTickIfViewportsOnly() const override;
 
 	enum class Fsm
 	{
@@ -26,17 +24,10 @@ public:
 	};
 	virtual void Tick(float DeltaTime)override;
 
-	UFUNCTION(NetMulticast,Reliable)
-	void MulticastMoveRailCamera(float RailRatio);
-
-	bool IsSupportedForNetworking() const override;
-
 protected:
 	virtual void BeginPlay() override;
 
 private:
-	UPROPERTY(EditAnywhere)
-	class UCameraComponent* CamComp = nullptr;
-	class UFsmComponent* FsmComp;
 	void SetupFsm();
+	class ACody* Cody = nullptr;
 };

@@ -11,6 +11,10 @@ ARotatingFan::ARotatingFan()
 		// 서버와 클라이언트 모두에서 변경사항을 적용할 도록 하는 코드입니다.
 		bReplicates = true;
 		SetReplicateMovement(true);
+		RootComponent = GetStaticMeshComponent();
+
+		ColMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ColMesh"));
+		ColMesh->SetupAttachment(RootComponent);
 	}
 }
 
@@ -18,14 +22,13 @@ void ARotatingFan::BeginPlay()
 {
 	if (true == HasAuthority())
 	{
-		GetStaticMeshComponent()->OnComponentHit.AddDynamic(this, &ARotatingFan::OnComponentHit);
+		ColMesh->OnComponentBeginOverlap.AddDynamic(this, &ARotatingFan::OnOverlapBegin);
 	}
 }
 
-void ARotatingFan::OnComponentHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+void ARotatingFan::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Display, TEXT("Hit"));
-	if (OtherActor&& OtherActor->ActorHasTag("Player"))
+	if (OtherActor && OtherActor->ActorHasTag("Player"))
 	{
 		APlayerBase* Player = Cast<APlayerBase>(OtherActor);
 		Player->AttackPlayer(12);

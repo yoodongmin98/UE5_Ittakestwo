@@ -345,17 +345,9 @@ public:
 	UFUNCTION(BlueprintCallable)
 	inline void SetRespawnPosition();
 
-	//////////////////////////////////////////
+
+
 	
-	//마우스 돌아가는 스피드
-	float RotationInterpSpeed = 2.0f;
-	//상호작용
-	UPROPERTY(Replicated)
-	bool IsInteract = false;
-
-	//////////////////////////////////////////
-
-
 
 
 	///////////////////Movement+Replicate Function///////////////////
@@ -384,6 +376,7 @@ public:
 	UFUNCTION(Server, Reliable)
 	void InteractNoneInput();
 
+
 	void Idle(const FInputActionInstance& _Instance);
 	void Look(const FInputActionInstance& _Instance);
 	virtual void SprintInput() {};
@@ -391,8 +384,6 @@ public:
 	void CustomMove(const FInputActionInstance& _Instance);
 	void CustomFlyMove(const FInputActionInstance& _Instance);
 	void CustomFlyNoneMove(const FInputActionInstance& _Instance);
-	void Sit();
-	void SitEnd();
 	void DashInput();
 	void DashNoneInput();
 	void GroundDash();
@@ -400,158 +391,15 @@ public:
 	void JumpDash();
 	///////////////////////////////////////////////////////
 
-
-	
-	/////////////////Controller///////////////////
-	APlayerController* CodyController = nullptr;
-	//////////////////////////////////////////////
-
-	///////////////////State/////////////////////
-	UPROPERTY(Replicated)
-	Cody_State ITTPlayerState;
-	//////////////////////////////////////////////
-
-	///////////////////Player/////////////////////
-	UPROPERTY(Replicated,EditAnywhere, BlueprintReadOnly, Category = Player)
-	int32 PlayerHP = 12;
-	int32 FullHP = 12;
-	UPROPERTY(Replicated)
-	bool IsPlayerDeath = false;
-
-
-	UFUNCTION(BlueprintCallable)
-	void PlayerDeathCheck();
-	UPROPERTY(Replicated)
-	float NowPlayerGravityScale;
-	UPROPERTY(Replicated)
-	float PlayerJumpZVelocity;
-	float PlayerDefaultJumpHeight;
-	//////////////////////////////////////////////
-
-	//////////////////Camera////////////////////
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class UCameraComponent* PlayerCameraComponent;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	class USpringArmComponent* SpringArm;
-
-	float BigLength;
-	float NormalLength;
-	float SmallLength;
-	FVector2D CameraLookVector = FVector2D::ZeroVector;
-	FVector ResPawnPosition = FVector(1000.0f,1000.0f,100.0f); //임시
-
-	//SpringArm기본 세팅 함수입니다.
-	UFUNCTION(BlueprintCallable)
-	void SpringArmDefaultFunction();
-	//////////////////////////////////////////////
-
-	//////////////////Movement////////////////////
-	UPROPERTY(Replicated)
-	float DashDistance = 2500.0f; // 앞구르기 거리
-	bool IsDGravity;
-	UPROPERTY(Replicated)
-	float PlayerDefaultSpeed;
-	UPROPERTY(Replicated)
-	float NowPlayerSpeed;
-	UPROPERTY(Replicated=OnRep_IsMoveEnd)
-	bool IsMoveEnd; //움직임이 끝났는지
-	UFUNCTION()
-	void OnRep_IsMoveEnd();
-	UPROPERTY(Replicated)
-	float DashDuration; // 앞구르기 지속 시간
-	UPROPERTY(Replicated)
-	float DashStartTime;//앞구르기 시작시간 체크
-	UPROPERTY(Replicated)
-	bool bIsDashing; // 앞구르기 중 여부를 나타내는 플래그
-	UPROPERTY(Replicated)
-	bool bIsDashingStart; //앞구르기 시작단계를 나타내는 플래그
-	UPROPERTY(Replicated)
-	bool bCanDash; //대쉬가 가능한 상태인지
-	FTimerHandle DashTimerHandle; // 앞구르기 타이머 핸들
-	float DefaultGroundFriction; // 기본 지면 마찰력
-	UPROPERTY(Replicated)
-	float DefaultGravityScale; //기본 중력
-	bool BigCanDash; //커진상태에서 대쉬가 가능한지 여부
-	UPROPERTY(Replicated)
-	float DashCurrentTime;
-	UPROPERTY(Replicated)
-	bool IsSprint; //달리기 여부
-
-	float SitStartTime;
-	float SitDuration;
-	UPROPERTY(Replicated)
-	bool CanSit;
-	UPROPERTY(Replicated)
-	bool IsSit;
-	float CurrentSitTime;
-	UPROPERTY(Replicated)
-	bool ChangeIdle;
-	UPROPERTY(Replicated)
-	int32 CharacterJumpCount;
-	UPROPERTY(Replicated)
-	FVector MoveDirection;
-	UPROPERTY(Replicated)
-	FVector2D MoveInput;
-	UPROPERTY(Replicated)
-	FRotator ControllerRotation;
-	UPROPERTY(Replicated)
-	FRotator CustomTargetRotation;
-	UPROPERTY(Replicated)
-	FVector WorldForwardVector;
-	UPROPERTY(Replicated)
-	FVector WorldRightVector;
-	UPROPERTY(Replicated)
-	FVector DashDirection;
-	UPROPERTY(Replicated)
-	FVector DashVelocity;
-
-	UPROPERTY(Replicated)
-	int32 CustomPlayerJumpCount;
-
-	UPROPERTY(Replicated)
-	FVector FlyForwardVector;
-	
-	//Fly
-	UPROPERTY(Replicated)
-	bool IsFly = false;
-	FVector CurrentDirection;
-	UPROPERTY(Replicated)
-	float FlyingSpeed;
-	//////////////////////////////////////////////
-
-	///////////////////Animation//////////////////
-	UPROPERTY(Replicated)
-	bool CurrentAnimationEnd; 
-	//////////////////////////////////////////////
-
 	//void GetOnlineSubsystem();
 	//IOnlineSessionPtr OnlineSeesioninterface;
 
 	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const;
 
-	///////////////////Cody//////////////////
-	UPROPERTY(Replicated)
-	CodySize CurCodySize = CodySize::NONE;
-	UPROPERTY(Replicated)
-	CodySize NextCodySize = CodySize::NONE;
-
-	//CodySize
-	UPROPERTY(Replicated)
-	bool IsBig;
-	UPROPERTY(Replicated)
-	bool CodyHoldEnemy = false;
-	/////////////////////////////////////////
-
-
-
-
-
-
-
 	///////////////////Widget//////////////////
-	UPROPERTY(EditAnywhere, Category = "UI")
-	class UPlayerMarkerUI* MarkerUIWidget;
-	UCapsuleComponent* CustomPlayerCapsuleComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	class UMarkerWidget* MarkerUIWidget;
+
 	UFUNCTION(BlueprintCallable)
 	void SettingMarkerWidget();
 	///////////////////////////////////////////
@@ -579,27 +427,10 @@ public:
 	UFUNCTION(Server, Reliable, WithValidation)
 	inline void ServerPlayerToHomingRoketJumpFinished();
 
-	UPROPERTY(Replicated)
-	FVector CunstomEndLocation;
-	UPROPERTY(Replicated)
-	FVector CunstomStartLocation;
-	UPROPERTY(Replicated)
-	bool JumplocationSet = false;
-	UPROPERTY(Replicated)
-	float JumpLocationDeltas = 0.0f;
-	UPROPERTY(Replicated)
-	double CustomTargetLocations;
-	UPROPERTY(Replicated)
-	double CustomTargetLocationsY;
-	UPROPERTY(Replicated)
-	FVector ResultTargetLocations;
-
 	UFUNCTION(Client, Reliable)
 	void CustomClientRideJump();
 	UFUNCTION(Server, Reliable, WithValidation)
 	void CustomServerRideJump();
-
-	bool OverlapHoming = false;
 	///////////////////////////////////////////
 	
 
@@ -625,4 +456,173 @@ public:
 	}
 	void UpdateCamTrans();
 	///////////////////////////////////////////
+
+
+protected:
+	///////////////////Player/////////////////////
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = Player)
+	int32 PlayerHP = 12;
+	int32 FullHP = 12;
+	UPROPERTY(Replicated)
+	bool IsPlayerDeath = false;
+
+
+	UFUNCTION(BlueprintCallable)
+	void PlayerDeathCheck();
+	UPROPERTY(Replicated)
+	float NowPlayerGravityScale;
+	UPROPERTY(Replicated)
+	float PlayerJumpZVelocity;
+	float PlayerDefaultJumpHeight;
+	//////////////////////////////////////////////
+
+	//////////////////Camera////////////////////
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class UCameraComponent* PlayerCameraComponent;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	class USpringArmComponent* SpringArm;
+
+	float BigLength;
+	float NormalLength;
+	float SmallLength;
+	FVector2D CameraLookVector = FVector2D::ZeroVector;
+	UPROPERTY(Replicated)
+	FVector ResPawnPosition = FVector(1000.0f, 1000.0f, 100.0f); //임시
+
+	//SpringArm기본 세팅 함수입니다.
+	UFUNCTION(BlueprintCallable)
+	void SpringArmDefaultFunction();
+	//////////////////////////////////////////////
+	//////////////////Movement////////////////////
+	UPROPERTY(Replicated)
+	float DashDistance = 2500.0f; // 앞구르기 거리
+	bool IsDGravity;
+	UPROPERTY(Replicated)
+	float PlayerDefaultSpeed;
+	UPROPERTY(Replicated)
+	float NowPlayerSpeed;
+	UPROPERTY(Replicated = OnRep_IsMoveEnd)
+	bool IsMoveEnd; //움직임이 끝났는지
+	UFUNCTION()
+	void OnRep_IsMoveEnd();
+	UPROPERTY(Replicated)
+	float DashDuration; // 앞구르기 지속 시간
+	UPROPERTY(Replicated)
+	float DashStartTime;//앞구르기 시작시간 체크
+	UPROPERTY(Replicated)
+	bool bIsDashing; // 앞구르기 중 여부를 나타내는 플래그
+	UPROPERTY(Replicated)
+	bool bIsDashingStart; //앞구르기 시작단계를 나타내는 플래그
+	UPROPERTY(Replicated)
+	bool bCanDash; //대쉬가 가능한 상태인지
+	FTimerHandle DashTimerHandle; // 앞구르기 타이머 핸들
+	float DefaultGroundFriction; // 기본 지면 마찰력
+	UPROPERTY(Replicated)
+	float DefaultGravityScale; //기본 중력
+	bool BigCanDash; //커진상태에서 대쉬가 가능한지 여부
+	UPROPERTY(Replicated)
+	float DashCurrentTime;
+	UPROPERTY(Replicated)
+	bool IsSprint; //달리기 여부
+
+	UPROPERTY(Replicated)
+	float SitStartTime;
+	UPROPERTY(Replicated)
+	float SitDuration;
+	UPROPERTY(Replicated)
+	bool CanSit;
+	UPROPERTY(Replicated)
+	bool IsSit;
+	UPROPERTY(Replicated)
+	float CurrentSitTime;
+	UPROPERTY(Replicated)
+	bool ChangeIdle;
+	UPROPERTY(Replicated)
+	int32 CharacterJumpCount;
+	UPROPERTY(Replicated)
+	FVector MoveDirection;
+	UPROPERTY(Replicated)
+	FVector2D MoveInput;
+	UPROPERTY(Replicated)
+	FRotator ControllerRotation;
+	UPROPERTY(Replicated)
+	FRotator CustomTargetRotation;
+	UPROPERTY(Replicated)
+	FVector WorldForwardVector;
+	UPROPERTY(Replicated)
+	FVector WorldRightVector;
+	UPROPERTY(Replicated)
+	FVector DashDirection;
+	UPROPERTY(Replicated)
+	FVector DashVelocity;
+
+	UPROPERTY(Replicated)
+	int32 CustomPlayerJumpCount;
+
+	UPROPERTY(Replicated)
+	FVector FlyForwardVector;
+
+	//Fly
+	UPROPERTY(Replicated)
+	bool IsFly = false;
+	FVector CurrentDirection;
+	UPROPERTY(Replicated)
+	float FlyingSpeed;
+	//////////////////////////////////////////////
+
+	///////////////////Cody//////////////////
+	UPROPERTY(Replicated)
+	CodySize CurCodySize = CodySize::NONE;
+	UPROPERTY(Replicated)
+	CodySize NextCodySize = CodySize::NONE;
+
+	//CodySize
+	UPROPERTY(Replicated)
+	bool IsBig;
+	UPROPERTY(Replicated)
+	bool CodyHoldEnemy = false;
+	/////////////////////////////////////////
+private:
+	///////////////////Widget//////////////////
+	UCapsuleComponent* CustomPlayerCapsuleComponent;
+
+	///////////////////Rocket//////////////////
+	UPROPERTY(Replicated)
+	FVector CunstomEndLocation;
+	UPROPERTY(Replicated)
+	FVector CunstomStartLocation;
+	UPROPERTY(Replicated)
+	bool JumplocationSet = false;
+	UPROPERTY(Replicated)
+	float JumpLocationDeltas = 0.0f;
+	UPROPERTY(Replicated)
+	double CustomTargetLocations;
+	UPROPERTY(Replicated)
+	double CustomTargetLocationsY;
+	UPROPERTY(Replicated)
+	FVector ResultTargetLocations;
+	bool OverlapHoming = false;
+
+	
+	///////////////////Animation//////////////////
+	UPROPERTY(Replicated)
+	bool CurrentAnimationEnd;
+	//////////////////////////////////////////////
+
+	/////////////////Controller///////////////////
+	APlayerController* CodyController = nullptr;
+	//////////////////////////////////////////////
+
+	///////////////////State/////////////////////
+	UPROPERTY(Replicated)
+	Cody_State ITTPlayerState;
+	//////////////////////////////////////////////
+
+	//////////////////////////////////////////
+	//마우스 돌아가는 스피드
+	float RotationInterpSpeed = 2.0f;
+	//상호작용
+	UPROPERTY(Replicated)
+	bool IsInteract = false;
+	//////////////////////////////////////////
 };

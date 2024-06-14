@@ -36,5 +36,5 @@ private:
 	class UNiagaraComponent* EnergyChargeEffectComp = nullptr;
 
 	UPROPERTY(EditDefaultsOnly)
-	float EffectLifeTime = 3.5f;
+	float EffectLifeTime = 8.0f;
 };
